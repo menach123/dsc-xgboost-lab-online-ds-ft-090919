@@ -49,8 +49,126 @@ In the cell below, use Pandas to import the dataset into a dataframe, and inspec
 
 
 ```python
-df = None
+df = pd.read_csv('winequality-red.csv')
+df.head()
 ```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>fixed acidity</th>
+      <th>volatile acidity</th>
+      <th>citric acid</th>
+      <th>residual sugar</th>
+      <th>chlorides</th>
+      <th>free sulfur dioxide</th>
+      <th>total sulfur dioxide</th>
+      <th>density</th>
+      <th>pH</th>
+      <th>sulphates</th>
+      <th>alcohol</th>
+      <th>quality</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>7.4</td>
+      <td>0.70</td>
+      <td>0.00</td>
+      <td>1.9</td>
+      <td>0.076</td>
+      <td>11.0</td>
+      <td>34.0</td>
+      <td>0.9978</td>
+      <td>3.51</td>
+      <td>0.56</td>
+      <td>9.4</td>
+      <td>5</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>7.8</td>
+      <td>0.88</td>
+      <td>0.00</td>
+      <td>2.6</td>
+      <td>0.098</td>
+      <td>25.0</td>
+      <td>67.0</td>
+      <td>0.9968</td>
+      <td>3.20</td>
+      <td>0.68</td>
+      <td>9.8</td>
+      <td>5</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>7.8</td>
+      <td>0.76</td>
+      <td>0.04</td>
+      <td>2.3</td>
+      <td>0.092</td>
+      <td>15.0</td>
+      <td>54.0</td>
+      <td>0.9970</td>
+      <td>3.26</td>
+      <td>0.65</td>
+      <td>9.8</td>
+      <td>5</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>11.2</td>
+      <td>0.28</td>
+      <td>0.56</td>
+      <td>1.9</td>
+      <td>0.075</td>
+      <td>17.0</td>
+      <td>60.0</td>
+      <td>0.9980</td>
+      <td>3.16</td>
+      <td>0.58</td>
+      <td>9.8</td>
+      <td>6</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>7.4</td>
+      <td>0.70</td>
+      <td>0.00</td>
+      <td>1.9</td>
+      <td>0.076</td>
+      <td>11.0</td>
+      <td>34.0</td>
+      <td>0.9978</td>
+      <td>3.51</td>
+      <td>0.56</td>
+      <td>9.4</td>
+      <td>5</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
 
 For this lab, our target column will be `'quality'`.  That makes this a multiclass classification problem. Given the data in the columns from `'fixed_acidity'` through `'alcohol'`, we'll predict the quality of the wine.  
 
@@ -64,10 +182,10 @@ In the cell below:
 
 
 ```python
-y = None
-X = None
+y = df.quality
+X = df.drop(columns=['quality'])
 
-X_train, X_test, y_train, y_test = None
+X_train, X_test, y_train, y_test = train_test_split(X,y,test_size=.2, random_state=42)
 ```
 
 Now that you have prepared the data for modeling, you can use XGBoost to build a model that can accurately classify wine quality based on the features of the wine!
@@ -77,22 +195,26 @@ The API for xgboost is purposefully written to mirror the same structure as othe
 
 ```python
 # Instantiate XGBClassifier
-clf = None
+clf = XGBClassifier()
 
 # Fit XGBClassifier
-
+clf.fit(X_train,y_train)
 
 # Predict on training and test sets
-training_preds = None
-test_preds = None
+training_preds = clf.predict(X_train)
+test_preds = clf.predict(X_test)
 
 # Accuracy of training and test sets
-training_accuracy = None
-test_accuracy = None
+training_accuracy = accuracy_score(y_train, training_preds)
+test_accuracy = accuracy_score(y_test, test_preds)
 
 print('Training Accuracy: {:.4}%'.format(training_accuracy * 100))
 print('Validation accuracy: {:.4}%'.format(test_accuracy * 100))
 ```
+
+    Training Accuracy: 80.22%
+    Validation accuracy: 60.0%
+    
 
 ## Tuning XGBoost
 
@@ -134,24 +256,35 @@ Now, in the cell below:
 
 
 ```python
-grid_clf = None
-grid_clf.fit(None, None)
+grid_clf = GridSearchCV(clf, param_grid, scoring='accuracy', cv=None, n_jobs=1)
+grid_clf.fit(X_train, y_train)
 
-best_parameters = None
+best_parameters = grid_clf.best_params_
 
 print('Grid Search found the following optimal parameters: ')
 for param_name in sorted(best_parameters.keys()):
     print('%s: %r' % (param_name, best_parameters[param_name]))
 
-training_preds = None
-test_preds = None
-training_accuracy = None
-test_accuracy = None
+training_preds = grid_clf.predict(X_train)
+test_preds = grid_clf.predict(X_test)
+training_accuracy = accuracy_score(y_train, training_preds)
+test_accuracy = accuracy_score(y_test, test_preds)
 
 print('')
 print('Training Accuracy: {:.4}%'.format(training_accuracy * 100))
 print('Validation accuracy: {:.4}%'.format(test_accuracy * 100))
 ```
+
+    Grid Search found the following optimal parameters: 
+    learning_rate: 0.1
+    max_depth: 6
+    min_child_weight: 1
+    n_estimators: 100
+    subsample: 0.5
+    
+    Training Accuracy: 98.2%
+    Validation accuracy: 67.19%
+    
 
 ## Summary
 
